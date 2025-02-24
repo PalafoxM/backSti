@@ -1,6 +1,7 @@
 // services/moodleService.js
 const axios = require('axios');
 const https = require('https');
+const nodemailer = require('nodemailer');
 const { moodleUrl, moodleToken, token_sti } = require('../config');
 
 
@@ -9,6 +10,19 @@ const axiosInstance = axios.create({
         rejectUnauthorized: false // Ignorar el certificado expirado
     })
 });
+
+
+const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com', // Servidor SMTP de Gmail
+    port: 465, // Puerto para SSL
+    secure: true, // Usar SSL
+    auth: {
+        user: 'apalafoxma@guanajuato.gob.mx', // Tu correo de Gmail
+        pass: 'PalafoxMarin1989', // Contraseña o contraseña de aplicación
+    },
+});
+
+
 
 // Función para editar un curso
 const updateCourse = async function(courseId, newName, newShortName, newStartDate = null, newEndDate = null, moodleId = null, visibility = 1) {
@@ -595,10 +609,27 @@ async function deleteUserid(courseid, userid) {
         return null;
     }
 }
+async function enviarCorreo(to, mensaje) {
+    try {
+        console.log(to);
+        console.log(mensaje);
 
+        const mailOptions = {
+            from: 'palafox.marin31@gmail.com', // Remitente
+            to, // Destinatario
+            subject: mensaje, // Asunto
+            html: '<p>Este es el cuerpo del mensaje en <b>HTML</b>.</p>', // Cuerpo del correo en HTML
+        };
 
-
-
+        // Enviar el correo usando await
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Correo enviado correctamente:', info.response);
+        return { error: false, data: info.response };
+    } catch (error) {
+        console.error('Error al enviar el correo:', error);
+        return { error: true, data: error.message };
+    }
+}
 
 module.exports = {
     createCategory,
@@ -616,6 +647,7 @@ module.exports = {
     getCourseDetailsById,
     matricularEnMoodle,
     deleteUserid,
+    enviarCorreo
    
 };
 

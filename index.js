@@ -3,6 +3,7 @@ const app = express();
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const mysql = require('mysql');
+
 const {token_sti, usuario, password, database, host } = require('./config');
 const { createCategory, 
         createCourse,
@@ -15,6 +16,7 @@ const { createCategory,
         getCourseDetailsById,
         matricularEnMoodle,
         deleteUserid,
+        enviarCorreo,
         createSubcategory } = require('./services/moodleService');
 
 
@@ -24,10 +26,15 @@ app.use(bodyParser.json());
 
  const staticToken = token_sti; 
 
-const HOSTNAME   = '172.31.113.61';
+//const HOSTNAME   = '172.31.113.61';
+//const USUARIO    = 'root';
+//const PASSWORD   = 'Gnosis01';
+//const DATABASE   = 'moodle_prod'; 
+
+const HOSTNAME   = 'localhost';
 const USUARIO    = 'root';
-const PASSWORD   = 'Gnosis01';
-const DATABASE   = 'moodle_prod'; 
+const PASSWORD   = '';
+const DATABASE   = 'ssp';
 
  const connection = mysql.createConnection({
     host: host,
@@ -62,6 +69,8 @@ const DATABASE   = 'moodle_prod';
         process.exit(1); // Salir con código de error
     }
 })();
+
+
 
 // Middleware para verificar el token JWT
 function verifyStaticToken(req, res, next) {
@@ -323,9 +332,9 @@ app.post('/saveTabla', verifyStaticToken, async (req, res) => {
             // Actualizar el registro existente
             const updateSQL = `UPDATE ${config.tabla} SET ? WHERE ${Object.keys(config.idEditar).map(key => `${key} = ?`).join(' AND ')}`;
             console.log([data, ...Object.values(config.idEditar)]);
-            console.log(updateSQL);
+   
             const updateResult = await query(updateSQL, [data, ...Object.values(config.idEditar)]);
-
+           
             if (updateResult.affectedRows === 0) {
                 response.respuesta = 'Error|No se pudo actualizar el registro';
                 await rollbackTransaction();
@@ -372,9 +381,31 @@ app.post('/saveTabla', verifyStaticToken, async (req, res) => {
 
     return res.json(response);
 });
-
-
-
+app.post('/enviarCorreo', verifyStaticToken, async (req, res) => {
+    const { to, mensaje } = req.body.data;
+    try {
+        const response = await enviarCorreo(to, mensaje);
+        if (response.error) {
+            return res.json({
+                error: true,
+                respuesta: 'Error al enviar el correo',
+                detalles: response.data
+            });
+        } else {
+            return res.json({
+                error: false,
+                respuesta: 'Correo enviado exitosamente',
+                data: response.data
+            });
+        }
+    } catch (error) {
+        console.error("Error en la API de Node.js:", error);
+        res.json({
+            error: true,
+            respuesta: 'Error en la API de Node.js: ' + error.message
+        });
+    }
+});
 // Endpoint para crear la categoría en Node.js
 app.post('/traerQuiz',verifyStaticToken , async (req, res) => {
     const { courseId } = req.body.data;
@@ -827,7 +858,7 @@ app.post('/crearCurso', async (req, res) => {
 });
 
 app.listen(3000, () => {
-    console.log('Servidor Node.js corriendo en el puerto 3000');
+    console.log('Servidor Node.js corriendo en el puertos 3000');
 });
 
 
