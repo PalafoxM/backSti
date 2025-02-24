@@ -45,4 +45,3 @@ Asegúrate de tener instalado:
 Este proyecto está bajo la licencia MIT.
 ```
 
-Puedes modificarlo según las necesidades de tu proyecto. ¡Déjame saber si quieres agregar más detalles! 🚀
